@@ -12,8 +12,50 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Iframe больше не используется - заменен на карточку с кнопкой
-// из-за X-Frame-Options / CSP блокировки со стороны Hugging Face
+// Проверка загрузки iframe и fallback при ошибке
+window.addEventListener('load', () => {
+  const iframe = document.getElementById('vton-iframe');
+  const fallback = document.getElementById('iframe-fallback');
+  
+  if (iframe && fallback) {
+    // Проверяем через 5 секунд, загрузился ли iframe
+    setTimeout(() => {
+      try {
+        // Пытаемся получить доступ к содержимому iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        // Если дошли сюда без ошибки, iframe загрузился
+        console.log('Iframe загружен успешно');
+      } catch (e) {
+        // Ошибка доступа (403/CORS) - значит iframe заблокирован
+        console.log('Iframe заблокирован, показываем fallback');
+        iframe.style.display = 'none';
+        fallback.style.display = 'flex';
+      }
+    }, 5000);
+    
+    // Также слушаем событие ошибки загрузки
+    iframe.addEventListener('error', () => {
+      console.log('Iframe error event');
+      iframe.style.display = 'none';
+      fallback.style.display = 'flex';
+    });
+    
+    // Проверяем по событию load
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          // Если можем получить доступ, значит все ок
+        } catch (e) {
+          // Не можем получить доступ - значит заблокирован
+          console.log('Iframe загружен, но заблокирован (403)');
+          iframe.style.display = 'none';
+          fallback.style.display = 'flex';
+        }
+      }, 1000);
+    });
+  }
+});
 
 // Intersection Observer for fade-in animations
 const observerOptions = {
