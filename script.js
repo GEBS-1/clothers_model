@@ -44,23 +44,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const pricingSelect = document.getElementById('pricing');
   const pricingOtherGroup = document.getElementById('pricing-other-group');
   
-  pricingSelect.addEventListener('change', () => {
-    if (pricingSelect.value === 'Другое') {
-      pricingOtherGroup.style.display = 'block';
-    } else {
-      pricingOtherGroup.style.display = 'none';
-      document.getElementById('pricing-other').value = '';
-    }
-  });
+  if (pricingSelect && pricingOtherGroup) {
+    pricingSelect.addEventListener('change', () => {
+      if (pricingSelect.value === 'Другое') {
+        pricingOtherGroup.style.display = 'block';
+      } else {
+        pricingOtherGroup.style.display = 'none';
+        const pricingOtherInput = document.getElementById('pricing-other');
+        if (pricingOtherInput) {
+          pricingOtherInput.value = '';
+        }
+      }
+    });
+  }
 });
 
 // Form submission
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contact-form');
+  if (!form) {
+    console.warn('Form not found');
+    return;
+  }
+  
   const messageDiv = document.getElementById('form-message');
   const submitBtn = form.querySelector('.btn-submit');
-  const btnText = submitBtn.querySelector('.btn-text');
-  const btnLoading = submitBtn.querySelector('.btn-loading');
+  const btnText = submitBtn?.querySelector('.btn-text');
+  const btnLoading = submitBtn?.querySelector('.btn-loading');
+  
+  if (!submitBtn || !btnText || !btnLoading || !messageDiv) {
+    console.warn('Form elements not found');
+    return;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -72,28 +87,57 @@ document.addEventListener('DOMContentLoaded', () => {
     messageDiv.style.display = 'none';
     
     // Get form data
-    const pricingOther = document.getElementById('pricing-other').value;
-    const pricingValue = document.getElementById('pricing').value === 'Другое' 
+    const pricingEl = document.getElementById('pricing');
+    const pricingOtherEl = document.getElementById('pricing-other');
+    const pricingOther = pricingOtherEl ? pricingOtherEl.value : '';
+    const pricingValue = pricingEl && pricingEl.value === 'Другое' 
       ? `Другое: ${pricingOther || 'не указано'}` 
-      : document.getElementById('pricing').value;
+      : (pricingEl ? pricingEl.value : '');
+    
+    // Проверяем наличие всех обязательных полей
+    const requiredFields = {
+      name: document.getElementById('name'),
+      phone: document.getElementById('phone'),
+      returns: document.getElementById('returns'),
+      questions: document.getElementById('questions'),
+      solutionInterest: document.getElementById('solution-interest'),
+      pilotReady: document.getElementById('pilot-ready'),
+      pricing: pricingEl,
+      pricingModel: document.getElementById('pricing-model'),
+      currentSolution: document.getElementById('current-solution'),
+      timeline: document.getElementById('timeline')
+    };
+    
+    // Проверяем, что все обязательные поля заполнены
+    for (const [key, field] of Object.entries(requiredFields)) {
+      if (!field || !field.value) {
+        messageDiv.className = 'form-message error';
+        messageDiv.textContent = `❌ Пожалуйста, заполните все обязательные поля (${key})`;
+        messageDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        return;
+      }
+    }
     
     const formData = {
-      name: document.getElementById('name').value,
-      email: document.getElementById('email').value || 'Не указан',
-      phone: document.getElementById('phone').value,
-      website: document.getElementById('website').value || 'Не указан',
+      name: requiredFields.name.value,
+      email: document.getElementById('email')?.value || 'Не указан',
+      phone: requiredFields.phone.value,
+      website: document.getElementById('website')?.value || 'Не указан',
       // Блок 1: Боль
-      returns: document.getElementById('returns').value,
-      questions: document.getElementById('questions').value,
+      returns: requiredFields.returns.value,
+      questions: requiredFields.questions.value,
       // Блок 2: Интерес
-      solutionInterest: document.getElementById('solution-interest').value,
-      pilotReady: document.getElementById('pilot-ready').value,
+      solutionInterest: requiredFields.solutionInterest.value,
+      pilotReady: requiredFields.pilotReady.value,
       // Блок 3: Деньги
       pricing: pricingValue,
-      pricingModel: document.getElementById('pricing-model').value,
+      pricingModel: requiredFields.pricingModel.value,
       // Блок 4: Конкуренты и сроки
-      currentSolution: document.getElementById('current-solution').value,
-      timeline: document.getElementById('timeline').value,
+      currentSolution: requiredFields.currentSolution.value,
+      timeline: requiredFields.timeline.value,
       timestamp: new Date().toLocaleString('ru-RU')
     };
     
@@ -187,14 +231,23 @@ Email: ${data.email}
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    let errorMessage = `Telegram API error: ${JSON.stringify(errorData)}`;
+    let errorData;
+    let errorMessage;
     
-    // Более понятные сообщения об ошибках
-    if (errorData.error_code === 400 && errorData.description?.includes('chat not found')) {
-      errorMessage = 'Ошибка: Chat ID не найден. Убедись, что:\n1. Chat ID правильный (проверь через @userinfobot)\n2. Ты написал боту /start (найди бота в Telegram и отправь команду)';
-    } else if (errorData.error_code === 401) {
-      errorMessage = 'Ошибка: Неверный токен бота. Проверь BOT_TOKEN в script.js';
+    try {
+      errorData = await response.json();
+      errorMessage = `Telegram API error: ${JSON.stringify(errorData)}`;
+      
+      // Более понятные сообщения об ошибках
+      if (errorData.error_code === 400 && errorData.description?.includes('chat not found')) {
+        errorMessage = 'Ошибка: Chat ID не найден. Убедись, что:\n1. Chat ID правильный (проверь через @userinfobot)\n2. Ты написал боту /start (найди бота в Telegram и отправь команду)';
+      } else if (errorData.error_code === 401) {
+        errorMessage = 'Ошибка: Неверный токен бота. Проверь BOT_TOKEN в script.js';
+      }
+    } catch (e) {
+      // Если ответ не JSON, используем текст ошибки
+      const errorText = await response.text().catch(() => 'Unknown error');
+      errorMessage = `Telegram API error: ${response.status} ${response.statusText} - ${errorText}`;
     }
     
     throw new Error(errorMessage);
