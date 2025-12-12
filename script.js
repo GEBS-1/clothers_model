@@ -13,29 +13,53 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // Обработка ошибки загрузки iframe (403 Forbidden)
+// Hugging Face Spaces часто блокируют встраивание через iframe
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
   
   if (iframe && fallback) {
-    // Проверяем через 3 секунды, загрузился ли iframe
-    setTimeout(() => {
+    // Проверяем сразу при загрузке
+    const checkIframe = () => {
       try {
         // Пытаемся получить доступ к содержимому iframe
-        // Если не можем (CORS/403), показываем fallback
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         // Если дошли сюда без ошибки, iframe загрузился
+        console.log('Iframe загружен успешно');
       } catch (e) {
         // Ошибка доступа (403/CORS) - значит iframe заблокирован
+        console.log('Iframe заблокирован (403), показываем fallback');
         iframe.style.display = 'none';
         fallback.style.display = 'flex';
       }
-    }, 3000);
+    };
+    
+    // Проверяем сразу
+    checkIframe();
+    
+    // И через 1 секунду еще раз (на случай, если загрузка задерживается)
+    setTimeout(checkIframe, 1000);
     
     // Также слушаем событие ошибки загрузки
     iframe.addEventListener('error', () => {
+      console.log('Iframe error event');
       iframe.style.display = 'none';
       fallback.style.display = 'flex';
+    });
+    
+    // Проверяем по событию load (если iframe загрузился, но заблокирован)
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          // Если можем получить доступ, значит все ок
+        } catch (e) {
+          // Не можем получить доступ - значит заблокирован
+          console.log('Iframe загружен, но заблокирован (403)');
+          iframe.style.display = 'none';
+          fallback.style.display = 'flex';
+        }
+      }, 500);
     });
   }
 });

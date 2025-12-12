@@ -53,22 +53,27 @@
         <h3>Попробуйте сами</h3>
         <p class="try-text">Загрузите фото человека и одежду, чтобы увидеть результат</p>
         <div class="iframe-container">
-          <iframe 
-            id="vton-iframe"
-            src="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
-            frameborder="0" 
-            allow="camera; microphone"
-            title="Virtual Try-On Demo"
-            onerror="handleIframeError()">
-          </iframe>
-          <div id="iframe-fallback" class="iframe-fallback" style="display: none;">
+          <!-- Fallback показывается сразу, т.к. Hugging Face блокирует iframe (403) -->
+          <div id="iframe-fallback" class="iframe-fallback">
             <div class="fallback-content">
-              <p class="fallback-text">💡 Виртуальная примерка не может быть встроена на страницу из-за ограничений безопасности.</p>
-              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" target="_blank" rel="noopener" class="btn btn-primary">
-                Открыть в новой вкладке
+              <p class="fallback-text">💡 Виртуальная примерка не может быть встроена на страницу из-за ограничений безопасности Hugging Face.</p>
+              <p class="fallback-text" style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-muted);">
+                Нажмите кнопку ниже, чтобы открыть примерку в новой вкладке:
+              </p>
+              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top: 1.5rem;">
+                🚀 Открыть виртуальную примерку
               </a>
             </div>
           </div>
+          <!-- Iframe скрыт, т.к. Hugging Face блокирует встраивание через iframe -->
+          <iframe 
+            id="vton-iframe"
+            src="about:blank" 
+            frameborder="0" 
+            allow="camera; microphone"
+            title="Virtual Try-On Demo"
+            style="display: none;">
+          </iframe>
         </div>
       </div>
 
