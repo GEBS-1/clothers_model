@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Виртуальная примерочная для онлайн-магазинов одежды. Минус 30% возвратов. Плюс 25% конверсии. AI примерка за 5 секунд.">
+  <title>Virtual Try-On для магазинов | Виртуальная примерочная</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <h1>Виртуальная примерочная</h1>
+      <p class="lead">Минус 30% возвратов. Плюс 25% конверсии. За 1 клик.</p>
+      <a href="#demo" class="btn btn-primary">Протестировать бесплатно</a>
+    </div>
+  </section>
+
+  <!-- Problem Section -->
+  <section class="problem">
+    <div class="container">
+      <h2>Почему люди не покупают?</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">📦</div>
+          <h3>25–35% возвратов</h3>
+          <p>"Не подошло по размеру/посадке"</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">😰</div>
+          <h3>Неуверенность</h3>
+          <p>"Клиент не видит товар на себе"</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <h3>Потеря продаж</h3>
+          <p>"Бросает корзину → к конкурентам"</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Section -->
+  <section id="demo" class="demo">
+    <div class="container">
+      <h2>Как это работает</h2>
+      <p class="demo-text">Фото клиента + ваша вещь → AI показывает примерку за 5 сек</p>
+      
+      <!-- Try It Yourself Section -->
+      <div class="try-section">
+        <h3>Попробуйте сами</h3>
+        <p class="try-text">Загрузите фото человека и одежду, чтобы увидеть результат</p>
+        <div class="iframe-container">
+          <iframe 
+            src="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
+            frameborder="0" 
+            allow="camera; microphone"
+            title="Virtual Try-On Demo">
+          </iframe>
+        </div>
+        <!-- <p class="iframe-note">💡 Если iframe не загружается, откройте <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" target="_blank" rel="noopener">в новой вкладке</a></p> -->
+      </div>
+
+      <!-- Static Demo Image (fallback) -->
+      <!-- <div class="demo-image">
+        <img src="demo.png" alt="Демо виртуальной примерки" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="placeholder" style="display: none;">
+          <p>Placeholder для скрина Kolors VTON demo</p>
+        </div>
+      </div> -->
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <!-- <section class="results">
+    <div class="container">
+      <h2>Результаты кейсов</h2>
+      <div class="chart-container">
+        <img src="chart.png" alt="График роста конверсии" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="placeholder" style="display: none;">
+          <p>Placeholder для графика роста конверсии</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">+25%</div>
+          <div class="stat-label">Конверсия</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">-30%</div>
+          <div class="stat-label">Возвраты</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">5 сек</div>
+          <div class="stat-label">Время примерки</div>
+        </div>
+      </div>
+    </div>
+  </section> -->
+
+  <!-- Form Section -->
+  <section id="form" class="form-section">
+    <div class="container">
+      <h2>Протестируем на ваших товарах?</h2>
+      <p class="form-lead">Оставьте контакты → покажу демо + результаты пилота</p>
+      <div class="form-container">
+        <form id="contact-form" class="contact-form">
+          <!-- Контакты -->
+          <div class="form-section-title">Контакты</div>
+          
+          <div class="form-group">
+            <label for="name">Имя / Название магазина *</label>
+            <input type="text" id="name" name="name" required placeholder="Как к вам обращаться?">
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="your@email.com">
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">Телефон *</label>
+            <input type="tel" id="phone" name="phone" required placeholder="+7 (999) 123-45-67">
+          </div>
+          
+          <div class="form-group">
+            <label for="website">Сайт магазина</label>
+            <input type="url" id="website" name="website" placeholder="https://yourstore.com">
+          </div>
+
+          <!-- Разделитель -->
+          <div class="form-divider"></div>
+          
+          <!-- Опрос -->
+          <div class="form-survey-title">Опрос</div>
+          
+          <!-- Блок 1: Боль -->
+          <div class="form-section-title">Блок 1: Боль (проверяем, есть ли проблема)</div>
+          
+          <div class="form-group">
+            <label for="returns">1. Какой % ваших заказов возвращается из-за "не подошло/не так сидит"? *</label>
+            <select id="returns" name="returns" required>
+              <option value="">Выберите...</option>
+              <option value="0-10%">0–10%</option>
+              <option value="11-20%">11–20%</option>
+              <option value="21-30%">21–30%</option>
+              <option value="31-50%">31–50%</option>
+              <option value=">50%">>50%</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="questions">2. Клиенты часто спрашивают "как это будет выглядеть на мне"? *</label>
+            <select id="questions" name="questions" required>
+              <option value="">Выберите...</option>
+              <option value="Да, постоянно">Да, постоянно</option>
+              <option value="Иногда">Иногда</option>
+              <option value="Редко">Редко</option>
+              <option value="Никогда">Никогда</option>
+            </select>
+          </div>
+
+          <!-- Блок 2: Интерес к решению -->
+          <div class="form-section-title">Блок 2: Интерес к решению</div>
+          
+          <div class="form-group">
+            <label for="solution-interest">3. Интересно решение: клиент загружает фото → выбирает товар → видит примерку на себе? *</label>
+            <select id="solution-interest" name="solution-interest" required>
+              <option value="">Выберите...</option>
+              <option value="Очень интересно">Очень интересно</option>
+              <option value="Интересно">Интересно</option>
+              <option value="Нейтрально">Нейтрально</option>
+              <option value="Не интересно">Не интересно</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="pilot-ready">4. Готовы протестировать пилот (1 месяц, ваши товары)? *</label>
+            <select id="pilot-ready" name="pilot-ready" required>
+              <option value="">Выберите...</option>
+              <option value="Да">Да</option>
+              <option value="Может быть">Может быть</option>
+              <option value="Нет">Нет</option>
+            </select>
+          </div>
+
+          <!-- Блок 3: Деньги -->
+          <div class="form-section-title">Блок 3: Деньги (самое важное)</div>
+          
+          <div class="form-group">
+            <label for="pricing">5. За какой ежемесячный тариф готовы платить? *</label>
+            <select id="pricing" name="pricing" required>
+              <option value="">Выберите...</option>
+              <option value="до 1000">до 1000₽</option>
+              <option value="1000 - 2500₽">1000 - 2500₽</option>
+              <option value="2500 - 5000₽">2500 - 5000₽</option>
+              <option value="5000₽+">5000₽+</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="pricing-other-group" style="display: none;">
+            <label for="pricing-other">Укажите сумму</label>
+            <input type="text" id="pricing-other" name="pricing-other" placeholder="Например: 15 000₽">
+          </div>
+          
+          <div class="form-group">
+            <label for="pricing-model">6. Или % от роста продаж после внедрения? *</label>
+            <select id="pricing-model" name="pricing-model" required>
+              <option value="">Выберите...</option>
+              <option value="Да, % лучше">Да, % лучше</option>
+              <option value="Фикс. сумма">Фикс. сумма</option>
+              <option value="Не готовы платить">Не готовы платить</option>
+            </select>
+          </div>
+
+          <!-- Блок 4: Конкуренты и сроки -->
+          <div class="form-section-title">Блок 4: Конкуренты и сроки</div>
+          
+          <div class="form-group">
+            <label for="current-solution">7. Используете сейчас виртуальную примерку? *</label>
+            <select id="current-solution" name="current-solution" required>
+              <option value="">Выберите...</option>
+              <option value="Да">Да</option>
+              <option value="Планируем">Планируем</option>
+              <option value="Нет, не интересно">Нет, не интересно</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="timeline">8. Когда планируете внедрять такое решение? *</label>
+            <select id="timeline" name="timeline" required>
+              <option value="">Выберите...</option>
+              <option value="В этом квартале">В этом квартале</option>
+              <option value="В следующем">В следующем</option>
+              <option value="Через полгода">Через полгода</option>
+              <option value="Никогда">Никогда</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-submit">
+            <span class="btn-text">Отправить заявку</span>
+            <span class="btn-loading" style="display: none;">Отправка...</span>
+          </button>
+          
+          <div id="form-message" class="form-message"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Virtual Try-On. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
