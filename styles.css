@@ -198,6 +198,29 @@ body {
   display: block;
 }
 
+.iframe-fallback {
+  width: 100%;
+  min-height: 800px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%);
+  border-radius: 12px;
+}
+
+.fallback-content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.fallback-text {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
 .iframe-note {
   margin-top: 1.5rem;
   font-size: 0.95rem;

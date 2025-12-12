@@ -12,6 +12,34 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
+// Обработка ошибки загрузки iframe (403 Forbidden)
+window.addEventListener('load', () => {
+  const iframe = document.getElementById('vton-iframe');
+  const fallback = document.getElementById('iframe-fallback');
+  
+  if (iframe && fallback) {
+    // Проверяем через 3 секунды, загрузился ли iframe
+    setTimeout(() => {
+      try {
+        // Пытаемся получить доступ к содержимому iframe
+        // Если не можем (CORS/403), показываем fallback
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        // Если дошли сюда без ошибки, iframe загрузился
+      } catch (e) {
+        // Ошибка доступа (403/CORS) - значит iframe заблокирован
+        iframe.style.display = 'none';
+        fallback.style.display = 'flex';
+      }
+    }, 3000);
+    
+    // Также слушаем событие ошибки загрузки
+    iframe.addEventListener('error', () => {
+      iframe.style.display = 'none';
+      fallback.style.display = 'flex';
+    });
+  }
+});
+
 // Intersection Observer for fade-in animations
 const observerOptions = {
   threshold: 0.1,

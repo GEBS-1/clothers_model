@@ -54,13 +54,22 @@
         <p class="try-text">Загрузите фото человека и одежду, чтобы увидеть результат</p>
         <div class="iframe-container">
           <iframe 
+            id="vton-iframe"
             src="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
             frameborder="0" 
             allow="camera; microphone"
-            title="Virtual Try-On Demo">
+            title="Virtual Try-On Demo"
+            onerror="handleIframeError()">
           </iframe>
+          <div id="iframe-fallback" class="iframe-fallback" style="display: none;">
+            <div class="fallback-content">
+              <p class="fallback-text">💡 Виртуальная примерка не может быть встроена на страницу из-за ограничений безопасности.</p>
+              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" target="_blank" rel="noopener" class="btn btn-primary">
+                Открыть в новой вкладке
+              </a>
+            </div>
+          </div>
         </div>
-        <!-- <p class="iframe-note">💡 Если iframe не загружается, откройте <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" target="_blank" rel="noopener">в новой вкладке</a></p> -->
       </div>
 
       <!-- Static Demo Image (fallback) -->
