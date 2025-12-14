@@ -94,9 +94,10 @@
           </div>
           
           <!-- Iframe -->
+          <!-- Пробуем сначала напрямую OOTDiffusion (может разрешать встраивание) -->
           <iframe 
             id="vton-iframe"
-            src="https://clothersmodel.gebraunt.workers.dev/" 
+            src="https://levihsu-ootdiffusion.hf.space/" 
             frameborder="0" 
             allow="camera; microphone; fullscreen; autoplay"
             allowfullscreen
@@ -116,18 +117,20 @@
                 Виртуальная примерка не может быть встроена. Попробуйте открыть один из Space'ов напрямую.
               </p>
               <div class="fallback-buttons">
-                <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
-                   target="_blank" 
-                   rel="noopener" 
-                   class="btn btn-primary">
-                  📸 Открыть Kolors VTON
-                </a>
                 <a href="https://levihsu-ootdiffusion.hf.space/" 
                    target="_blank" 
                    rel="noopener" 
                    class="btn btn-primary">
                   👔 Открыть OOTDiffusion
                 </a>
+                <!-- Временно закомментировано - сильная блокировка
+                <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
+                   target="_blank" 
+                   rel="noopener" 
+                   class="btn btn-primary">
+                  📸 Открыть Kolors VTON
+                </a>
+                -->
               </div>
             </div>
           </div>

@@ -27,17 +27,28 @@ async function handleRequest(request) {
   const url = new URL(request.url)
   
   // Список альтернативных Space'ов (пробуем по очереди)
+  // Временно используем только OOTDiffusion, так как Kolors VTON имеет сильную блокировку
   const spaces = [
-    'https://kwai-kolors-kolors-virtual-try-on.hf.space',
     'https://levihsu-ootdiffusion.hf.space'
+    // 'https://kwai-kolors-kolors-virtual-try-on.hf.space' // Закомментировано - сильная блокировка
   ]
+  
+  // Для статических файлов (assets, CSS, JS) пробуем все Space'ы параллельно
+  const isStaticFile = url.pathname.startsWith('/assets/') || 
+                       url.pathname.endsWith('.js') || 
+                       url.pathname.endsWith('.css') ||
+                       url.pathname.endsWith('.png') ||
+                       url.pathname.endsWith('.jpg') ||
+                       url.pathname.endsWith('.svg') ||
+                       url.pathname.endsWith('.woff') ||
+                       url.pathname.endsWith('.woff2')
   
   // Пробуем каждый Space по очереди
   for (let i = 0; i < spaces.length; i++) {
     const targetBase = spaces[i]
     const targetUrl = `${targetBase}${url.pathname}${url.search}${url.hash}`
     
-    console.log(`Trying Space ${i + 1}/${spaces.length}:`, targetBase)
+    console.log(`Trying Space ${i + 1}/${spaces.length}:`, targetBase, `Path: ${url.pathname}`)
   
     try {
       // Проксируем запрос к Hugging Face Space
@@ -60,12 +71,28 @@ async function handleRequest(request) {
       console.log(`Space ${i + 1} response status:`, response.status)
       
       // Если получили ошибку (4xx, 5xx), пробуем следующий Space
-      if (response.status >= 400) {
+      if (response.status >= 400 && response.status !== 404) {
         console.log(`Space ${i + 1} failed with status ${response.status}, trying next...`)
         if (i < spaces.length - 1) {
           continue // Пробуем следующий Space
         }
         // Если это последний Space, все равно возвращаем ответ
+      }
+      
+      // Для статических файлов сразу возвращаем, не проверяя дальше
+      if (isStaticFile && response.status === 200) {
+        console.log(`Static file found on Space ${i + 1}, returning immediately`)
+        const body = await response.arrayBuffer()
+        const newHeaders = new Headers(response.headers)
+        newHeaders.delete('X-Frame-Options')
+        newHeaders.delete('Content-Security-Policy')
+        newHeaders.set('Access-Control-Allow-Origin', '*')
+        newHeaders.set('Cache-Control', 'public, max-age=3600')
+        return new Response(body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: newHeaders
+        })
       }
     
     // Создаем новые заголовки

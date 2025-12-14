@@ -29,6 +29,7 @@ window.addEventListener('load', () => {
   
   console.log('🔍 Начинаем проверку iframe...');
   console.log('📍 URL iframe:', iframe.src);
+  console.log('ℹ️ Используем OOTDiffusion (levihsu-ootdiffusion.hf.space)');
   
   let isBlocked = false;
   let checkCount = 0;
@@ -82,13 +83,11 @@ window.addEventListener('load', () => {
     const iframeRect = iframe.getBoundingClientRect();
     const isVisible = iframeRect.width > 0 && iframeRect.height > 0;
     
-    // Проверяем, что iframe загрузился (событие load уже сработало)
-    const isLoaded = iframe.complete || iframe.readyState === 'complete';
-    
-    if (isVisible && isLoaded) {
+    // Если iframe видим, считаем что загрузился (даже если контент еще грузится)
+    if (isVisible) {
       // Iframe загружен и видим
       if (!isBlocked) {
-        console.log('✅ Iframe загружен успешно!');
+        console.log('✅ Iframe видим, считаем загруженным!');
         updateStatus('✅ Виртуальная примерка загружена', 'success');
         showIframe();
         return true;
@@ -96,7 +95,7 @@ window.addEventListener('load', () => {
       return true;
     } else {
       // Еще загружается
-      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: загрузка... (visible: ${isVisible}, loaded: ${isLoaded})`);
+      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: загрузка... (visible: ${isVisible})`);
       updateStatus(`🔄 Загрузка ${checkCount}/${maxChecks}...`, '');
       
       if (checkCount >= maxChecks && !isBlocked) {
@@ -131,14 +130,17 @@ window.addEventListener('load', () => {
   // Проверяем сразу
   updateStatus('🔄 Загрузка...', '');
   
-  // Проверяем каждые 2 секунды
+  // Показываем iframe сразу (он скрыт по умолчанию)
+  iframe.style.display = 'block';
+  
+  // Проверяем каждые 1.5 секунды (быстрее)
   let checkInterval = setInterval(() => {
     if (checkIframe() || checkCount >= maxChecks) {
       clearInterval(checkInterval);
     }
-  }, 2000);
+  }, 1500);
   
-  // Останавливаем проверку через 20 секунд
+  // Останавливаем проверку через 12 секунд (быстрее показываем fallback)
   setTimeout(() => {
     clearInterval(checkInterval);
     if (!isBlocked && checkCount < maxChecks) {
@@ -154,7 +156,7 @@ window.addEventListener('load', () => {
         showFallback();
       }
     }
-  }, 20000);
+  }, 12000);
   
   // Также слушаем событие ошибки загрузки
   iframe.addEventListener('error', (e) => {
