@@ -1,11 +1,8 @@
 # Cloudflare Workers конфигурация
 # Этот файл нужен для деплоя Worker через GitHub
 
-name = "vton-proxy"
+name = "clothersmodel"
 main = "cloudflare-worker.js"
 compatibility_date = "2024-01-01"
-
-# Настройки для прокси
-[env.production]
-routes = []
+compatibility_flags = ["nodejs_compat"]
 

@@ -9,9 +9,12 @@
 // 5. Скопируй URL Worker (типа: your-worker.workers.dev)
 // 6. Замени URL в index.html на этот прокси URL
 
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
+// ES Modules формат (требуется для Cloudflare Workers)
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request)
+  }
+}
 
 async function handleRequest(request) {
   const url = new URL(request.url)
