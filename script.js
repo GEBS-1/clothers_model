@@ -12,8 +12,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Проверка загрузки iframe и fallback при ошибке
-// Hugging Face блокирует встраивание через X-Frame-Options/CSP
+// Упрощенная проверка загрузки iframe - только панель управления
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
@@ -26,15 +25,6 @@ window.addEventListener('load', () => {
     console.error('Не найдены необходимые элементы');
     return;
   }
-  
-  console.log('🔍 Начинаем проверку iframe...');
-  console.log('📍 URL iframe:', iframe.src);
-  console.log('ℹ️ Используем OOTDiffusion (levihsu-ootdiffusion.hf.space)');
-  
-  let isBlocked = false;
-  let checkCount = 0;
-  const maxChecks = 5;
-  let loadTimeout;
   
   const hideLoading = () => {
     if (loading) {
@@ -66,67 +56,23 @@ window.addEventListener('load', () => {
     }
   };
   
-  const updateStatus = (text, className = '') => {
-    if (status) {
-      status.textContent = text;
-      status.className = 'space-status ' + className;
-    }
-    // Также обновляем текст загрузки для большей ясности
-    const loadingText = document.getElementById('loading-status-text');
-    if (loadingText) {
-      if (text.includes('Загрузка') || text.includes('Подключение')) {
-        loadingText.textContent = text.replace(/[🔄✅❌]/g, '').trim();
-      } else if (text.includes('загружена')) {
-        loadingText.textContent = 'Готово!';
-      } else if (text.includes('не удалось') || text.includes('недоступен')) {
-        loadingText.textContent = 'Space недоступен';
-      }
-    }
-  };
+  // Показываем iframe сразу
+  iframe.style.display = 'block';
   
-  const checkIframe = () => {
-    checkCount++;
-    
-    // Проверяем, загрузился ли iframe по другим признакам
-    // Не пытаемся читать document (это всегда SecurityError для cross-origin)
-    
-    // Проверяем, что iframe видим и имеет размеры
-    const iframeRect = iframe.getBoundingClientRect();
-    const isVisible = iframeRect.width > 0 && iframeRect.height > 0;
-    
-    // Если iframe видим, считаем что загрузился (даже если контент еще грузится)
-    if (isVisible) {
-      // Iframe загружен и видим
-      if (!isBlocked) {
-        console.log('✅ Iframe видим, считаем загруженным!');
-        updateStatus('✅ Виртуальная примерка загружена', 'success');
-        showIframe();
-        return true;
-      }
-      return true;
-    } else {
-      // Еще загружается
-      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: загрузка... (visible: ${isVisible})`);
-      updateStatus(`🔄 Загрузка ${checkCount}/${maxChecks}...`, '');
-      
-      if (checkCount >= maxChecks && !isBlocked) {
-        console.log('❌ Iframe не загрузился за отведенное время, показываем fallback');
-        updateStatus('❌ Не удалось загрузить', 'error');
-        isBlocked = true;
-        showFallback();
-      }
-      return false;
-    }
-  };
+  // Простая проверка - если iframe загрузился, показываем панель
+  iframe.addEventListener('load', () => {
+    console.log('📥 Iframe загружен');
+    setTimeout(() => {
+      showIframe();
+    }, 1000); // Небольшая задержка для полной загрузки
+  });
   
   // Кнопка перезагрузки
   if (btnReload) {
     btnReload.addEventListener('click', () => {
       console.log('🔄 Перезагрузка iframe...');
-      isBlocked = false;
-      checkCount = 0;
       if (iframe) {
-        iframe.src = iframe.src; // Перезагружаем
+        iframe.src = iframe.src;
       }
       if (loading) {
         loading.style.display = 'flex';
@@ -134,86 +80,19 @@ window.addEventListener('load', () => {
       if (fallback) {
         fallback.style.display = 'none';
       }
-      updateStatus('🔄 Перезагрузка...', '');
+      if (status) {
+        status.textContent = '🔄 Перезагрузка...';
+      }
     });
   }
   
-  // Проверяем сразу
-  updateStatus('🔄 Подключение к виртуальной примерке...', '');
-  
-  // Показываем iframe сразу (он скрыт по умолчанию)
-  iframe.style.display = 'block';
-  
-  // Проверяем каждые 1.5 секунды (быстрее)
-  let checkInterval = setInterval(() => {
-    if (checkIframe() || checkCount >= maxChecks) {
-      clearInterval(checkInterval);
-    }
-  }, 1500);
-  
-  // Останавливаем проверку через 10 секунд (быстрее показываем fallback)
+  // Если через 8 секунд не загрузилось, показываем fallback
   setTimeout(() => {
-    clearInterval(checkInterval);
-    if (!isBlocked && checkCount < maxChecks) {
-      // Финальная проверка - если iframe видим, считаем что загрузился
-      const iframeRect = iframe.getBoundingClientRect();
-      if (iframeRect.width > 0 && iframeRect.height > 0) {
-        console.log('✅ Iframe видим, считаем загруженным');
-        updateStatus('✅ Виртуальная примерка загружена', 'success');
-        showIframe();
-      } else {
-        console.log('❌ Iframe не видим, показываем fallback');
-        updateStatus('❌ Space недоступен или заблокирован', 'error');
-        showFallback();
-      }
-    }
-  }, 10000);
-  
-  // Также слушаем событие ошибки загрузки
-  iframe.addEventListener('error', (e) => {
-    console.log('❌ Iframe error event:', e);
-    if (!isBlocked) {
-      isBlocked = true;
-      updateStatus('❌ Ошибка загрузки', 'error');
+    const iframeRect = iframe.getBoundingClientRect();
+    if (iframeRect.width === 0 || iframeRect.height === 0) {
       showFallback();
     }
-  });
-  
-  // Проверяем по событию load
-  let loadEventFired = false;
-  iframe.addEventListener('load', () => {
-    console.log('📥 Iframe load event сработал');
-    loadEventFired = true;
-    clearTimeout(loadTimeout);
-    // Даем время на полную загрузку контента
-    setTimeout(() => {
-      if (checkIframe()) {
-        clearInterval(checkInterval);
-      }
-    }, 3000);
-  });
-  
-  // Если load событие не сработало за 8 секунд, предупреждаем
-  setTimeout(() => {
-    if (!loadEventFired && !isBlocked) {
-      console.log('⚠️ Iframe load event не сработал за 8 секунд');
-      updateStatus('⚠️ Долгая загрузка...', '');
-      // Показываем кнопки управления раньше
-      if (controls) {
-        controls.style.display = 'block';
-      }
-    }
   }, 8000);
-  
-  // Проверяем доступность Space напрямую (для диагностики)
-  fetch('https://levihsu-ootdiffusion.hf.space/', { method: 'HEAD', mode: 'no-cors' })
-    .then(() => {
-      console.log('✅ Space доступен напрямую');
-    })
-    .catch(() => {
-      console.log('⚠️ Space может быть недоступен');
-      updateStatus('⚠️ Space может быть недоступен', '');
-    });
 });
 
 // Intersection Observer for fade-in animations
