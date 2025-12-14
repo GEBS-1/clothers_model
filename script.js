@@ -18,11 +18,11 @@ window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
   const loading = document.getElementById('iframe-loading');
-  // const controls = document.getElementById('iframe-controls'); // Закомментировано
-  // const status = document.getElementById('space-status'); // Закомментировано
-  // const btnReload = document.getElementById('btn-reload'); // Закомментировано
+  const controls = document.getElementById('iframe-controls');
+  const status = document.getElementById('space-status');
+  const btnReload = document.getElementById('btn-reload');
   
-  if (!iframe || !fallback || !loading) {
+  if (!iframe || !fallback || !loading || !controls || !status || !btnReload) {
     console.error('Не найдены необходимые элементы');
     return;
   }
@@ -42,18 +42,18 @@ window.addEventListener('load', () => {
     }
   };
   
-  // const showControls = () => {
-  //   if (controls) {
-  //     controls.style.display = 'block';
-  //   }
-  // }; // Закомментировано
+  const showControls = () => {
+    if (controls) {
+      controls.style.display = 'block';
+    }
+  };
   
   const showIframe = () => {
     if (iframe) {
       iframe.style.display = 'block';
     }
     hideLoading();
-    // showControls(); // Закомментировано
+    showControls();
   };
   
   const showFallback = () => {
@@ -61,16 +61,16 @@ window.addEventListener('load', () => {
       fallback.style.display = 'flex';
     }
     hideLoading();
-    // if (controls) {
-    //   controls.style.display = 'none';
-    // } // Закомментировано
+    if (controls) {
+      controls.style.display = 'none';
+    }
   };
   
   const updateStatus = (text, className = '') => {
-    // if (status) {
-    //   status.textContent = text;
-    //   status.className = 'space-status ' + className;
-    // } // Закомментировано
+    if (status) {
+      status.textContent = text;
+      status.className = 'space-status ' + className;
+    }
     // Также обновляем текст загрузки для большей ясности
     const loadingText = document.getElementById('loading-status-text');
     if (loadingText) {
@@ -119,24 +119,24 @@ window.addEventListener('load', () => {
     }
   };
   
-  // Кнопка перезагрузки - закомментировано
-  // if (btnReload) {
-  //   btnReload.addEventListener('click', () => {
-  //     console.log('🔄 Перезагрузка iframe...');
-  //     isBlocked = false;
-  //     checkCount = 0;
-  //     if (iframe) {
-  //       iframe.src = iframe.src; // Перезагружаем
-  //     }
-  //     if (loading) {
-  //       loading.style.display = 'flex';
-  //     }
-  //     if (fallback) {
-  //       fallback.style.display = 'none';
-  //     }
-  //     updateStatus('🔄 Перезагрузка...', '');
-  //   });
-  // }
+  // Кнопка перезагрузки
+  if (btnReload) {
+    btnReload.addEventListener('click', () => {
+      console.log('🔄 Перезагрузка iframe...');
+      isBlocked = false;
+      checkCount = 0;
+      if (iframe) {
+        iframe.src = iframe.src; // Перезагружаем
+      }
+      if (loading) {
+        loading.style.display = 'flex';
+      }
+      if (fallback) {
+        fallback.style.display = 'none';
+      }
+      updateStatus('🔄 Перезагрузка...', '');
+    });
+  }
   
   // Проверяем сразу
   updateStatus('🔄 Подключение к виртуальной примерке...', '');
@@ -198,10 +198,10 @@ window.addEventListener('load', () => {
     if (!loadEventFired && !isBlocked) {
       console.log('⚠️ Iframe load event не сработал за 8 секунд');
       updateStatus('⚠️ Долгая загрузка...', '');
-      // Показываем кнопки управления раньше - закомментировано
-      // if (controls) {
-      //   controls.style.display = 'block';
-      // }
+      // Показываем кнопки управления раньше
+      if (controls) {
+        controls.style.display = 'block';
+      }
     }
   }, 8000);
   
