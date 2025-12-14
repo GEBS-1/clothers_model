@@ -71,8 +71,31 @@ async function handleRequest(request) {
       console.log(`Space ${i + 1} response status:`, response.status)
       
       // Если получили ошибку (4xx, 5xx), пробуем следующий Space
-      if (response.status >= 400 && response.status !== 404) {
-        console.log(`Space ${i + 1} failed with status ${response.status}, trying next...`)
+      if (response.status >= 400) {
+        // Читаем тело ответа для диагностики
+        const errorText = await response.text().catch(() => '')
+        console.log(`Space ${i + 1} failed with status ${response.status}, error: ${errorText.substring(0, 200)}`)
+        
+        // Если это ошибка "Token and remote not found", Space недоступен
+        if (errorText.includes('Token and remote not found') || errorText.includes('error')) {
+          console.log(`Space ${i + 1} is unavailable (Token/remote error), trying next...`)
+          if (i < spaces.length - 1) {
+            continue // Пробуем следующий Space
+          }
+          // Если это последний Space, возвращаем понятную ошибку
+          return new Response(JSON.stringify({
+            error: 'Space Unavailable',
+            message: 'Hugging Face Space is currently unavailable. Please try opening it directly in a new tab.',
+            directUrl: spaces[i]
+          }), {
+            status: 503,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            }
+          })
+        }
+        
         if (i < spaces.length - 1) {
           continue // Пробуем следующий Space
         }

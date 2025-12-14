@@ -71,6 +71,17 @@ window.addEventListener('load', () => {
       status.textContent = text;
       status.className = 'space-status ' + className;
     }
+    // Также обновляем текст загрузки для большей ясности
+    const loadingText = document.getElementById('loading-status-text');
+    if (loadingText) {
+      if (text.includes('Загрузка') || text.includes('Подключение')) {
+        loadingText.textContent = text.replace(/[🔄✅❌]/g, '').trim();
+      } else if (text.includes('загружена')) {
+        loadingText.textContent = 'Готово!';
+      } else if (text.includes('не удалось') || text.includes('недоступен')) {
+        loadingText.textContent = 'Space недоступен';
+      }
+    }
   };
   
   const checkIframe = () => {
@@ -128,7 +139,7 @@ window.addEventListener('load', () => {
   }
   
   // Проверяем сразу
-  updateStatus('🔄 Загрузка...', '');
+  updateStatus('🔄 Подключение к виртуальной примерке...', '');
   
   // Показываем iframe сразу (он скрыт по умолчанию)
   iframe.style.display = 'block';
@@ -140,7 +151,7 @@ window.addEventListener('load', () => {
     }
   }, 1500);
   
-  // Останавливаем проверку через 12 секунд (быстрее показываем fallback)
+  // Останавливаем проверку через 10 секунд (быстрее показываем fallback)
   setTimeout(() => {
     clearInterval(checkInterval);
     if (!isBlocked && checkCount < maxChecks) {
@@ -152,11 +163,11 @@ window.addEventListener('load', () => {
         showIframe();
       } else {
         console.log('❌ Iframe не видим, показываем fallback');
-        updateStatus('❌ Не удалось загрузить', 'error');
+        updateStatus('❌ Space недоступен или заблокирован', 'error');
         showFallback();
       }
     }
-  }, 12000);
+  }, 10000);
   
   // Также слушаем событие ошибки загрузки
   iframe.addEventListener('error', (e) => {
@@ -182,13 +193,27 @@ window.addEventListener('load', () => {
     }, 3000);
   });
   
-  // Если load событие не сработало за 10 секунд, считаем что ошибка
+  // Если load событие не сработало за 8 секунд, предупреждаем и показываем кнопки
   setTimeout(() => {
     if (!loadEventFired && !isBlocked) {
-      console.log('⚠️ Iframe load event не сработал за 10 секунд');
-      updateStatus('⚠️ Долгая загрузка...', '');
+      console.log('⚠️ Iframe load event не сработал за 8 секунд');
+      updateStatus('⚠️ Долгая загрузка... Попробуйте открыть напрямую', '');
+      // Показываем кнопки управления раньше
+      if (controls) {
+        controls.style.display = 'block';
+      }
     }
-  }, 10000);
+  }, 8000);
+  
+  // Проверяем доступность Space напрямую (для диагностики)
+  fetch('https://levihsu-ootdiffusion.hf.space/', { method: 'HEAD', mode: 'no-cors' })
+    .then(() => {
+      console.log('✅ Space доступен напрямую');
+    })
+    .catch(() => {
+      console.log('⚠️ Space может быть недоступен');
+      updateStatus('⚠️ Space может быть недоступен', '');
+    });
 });
 
 // Intersection Observer for fade-in animations
