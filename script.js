@@ -74,10 +74,19 @@ window.addEventListener('load', () => {
   
   const checkIframe = () => {
     checkCount++;
-    try {
-      // Пытаемся получить доступ к содержимому iframe
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      // Если дошли сюда без ошибки, iframe загрузился
+    
+    // Проверяем, загрузился ли iframe по другим признакам
+    // Не пытаемся читать document (это всегда SecurityError для cross-origin)
+    
+    // Проверяем, что iframe видим и имеет размеры
+    const iframeRect = iframe.getBoundingClientRect();
+    const isVisible = iframeRect.width > 0 && iframeRect.height > 0;
+    
+    // Проверяем, что iframe загрузился (событие load уже сработало)
+    const isLoaded = iframe.complete || iframe.readyState === 'complete';
+    
+    if (isVisible && isLoaded) {
+      // Iframe загружен и видим
       if (!isBlocked) {
         console.log('✅ Iframe загружен успешно!');
         updateStatus('✅ Виртуальная примерка загружена', 'success');
@@ -85,13 +94,13 @@ window.addEventListener('load', () => {
         return true;
       }
       return true;
-    } catch (e) {
-      // Ошибка доступа (403/CORS) - значит iframe заблокирован
-      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: ${e.name} - ${e.message}`);
-      updateStatus(`🔄 Проверка ${checkCount}/${maxChecks}...`, '');
+    } else {
+      // Еще загружается
+      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: загрузка... (visible: ${isVisible}, loaded: ${isLoaded})`);
+      updateStatus(`🔄 Загрузка ${checkCount}/${maxChecks}...`, '');
       
       if (checkCount >= maxChecks && !isBlocked) {
-        console.log('❌ Iframe окончательно заблокирован, показываем fallback');
+        console.log('❌ Iframe не загрузился за отведенное время, показываем fallback');
         updateStatus('❌ Не удалось загрузить', 'error');
         isBlocked = true;
         showFallback();
@@ -121,23 +130,31 @@ window.addEventListener('load', () => {
   
   // Проверяем сразу
   updateStatus('🔄 Загрузка...', '');
-  loadTimeout = setTimeout(() => {
-    if (!checkIframe() && checkCount < maxChecks) {
-      // Проверяем через 3 секунды
-      setTimeout(() => {
-        if (!checkIframe() && checkCount < maxChecks) {
-          // Еще проверки
-          setTimeout(() => {
-            if (!checkIframe() && checkCount < maxChecks) {
-              setTimeout(() => {
-                checkIframe();
-              }, 3000);
-            }
-          }, 3000);
-        }
-      }, 3000);
+  
+  // Проверяем каждые 2 секунды
+  let checkInterval = setInterval(() => {
+    if (checkIframe() || checkCount >= maxChecks) {
+      clearInterval(checkInterval);
     }
-  }, 3000);
+  }, 2000);
+  
+  // Останавливаем проверку через 20 секунд
+  setTimeout(() => {
+    clearInterval(checkInterval);
+    if (!isBlocked && checkCount < maxChecks) {
+      // Финальная проверка - если iframe видим, считаем что загрузился
+      const iframeRect = iframe.getBoundingClientRect();
+      if (iframeRect.width > 0 && iframeRect.height > 0) {
+        console.log('✅ Iframe видим, считаем загруженным');
+        updateStatus('✅ Виртуальная примерка загружена', 'success');
+        showIframe();
+      } else {
+        console.log('❌ Iframe не видим, показываем fallback');
+        updateStatus('❌ Не удалось загрузить', 'error');
+        showFallback();
+      }
+    }
+  }, 20000);
   
   // Также слушаем событие ошибки загрузки
   iframe.addEventListener('error', (e) => {
@@ -150,13 +167,26 @@ window.addEventListener('load', () => {
   });
   
   // Проверяем по событию load
+  let loadEventFired = false;
   iframe.addEventListener('load', () => {
     console.log('📥 Iframe load event сработал');
+    loadEventFired = true;
     clearTimeout(loadTimeout);
+    // Даем время на полную загрузку контента
     setTimeout(() => {
-      checkIframe();
-    }, 2000);
+      if (checkIframe()) {
+        clearInterval(checkInterval);
+      }
+    }, 3000);
   });
+  
+  // Если load событие не сработало за 10 секунд, считаем что ошибка
+  setTimeout(() => {
+    if (!loadEventFired && !isBlocked) {
+      console.log('⚠️ Iframe load event не сработал за 10 секунд');
+      updateStatus('⚠️ Долгая загрузка...', '');
+    }
+  }, 10000);
 });
 
 // Intersection Observer for fade-in animations
