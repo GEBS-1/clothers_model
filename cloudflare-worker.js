@@ -26,33 +26,47 @@ export default {
 async function handleRequest(request) {
   const url = new URL(request.url)
   
-  // Базовый URL Hugging Face Space
-  const targetBase = 'https://kwai-kolors-kolors-virtual-try-on.hf.space'
-  const targetUrl = `${targetBase}${url.pathname}${url.search}${url.hash}`
+  // Список альтернативных Space'ов (пробуем по очереди)
+  const spaces = [
+    'https://kwai-kolors-kolors-virtual-try-on.hf.space',
+    'https://levihsu-ootdiffusion.hf.space'
+  ]
   
-  // Логирование для отладки
-  console.log('Proxying request to:', targetUrl)
-  
-  try {
-    // Проксируем запрос к Hugging Face Space
-    const response = await fetch(targetUrl, {
-      method: request.method,
-      headers: {
-        'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': request.headers.get('Accept') || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': request.headers.get('Accept-Language') || 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Referer': targetBase + '/',
-        'Origin': targetBase,
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-      },
-      body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
-      redirect: 'follow'
-    })
+  // Пробуем каждый Space по очереди
+  for (let i = 0; i < spaces.length; i++) {
+    const targetBase = spaces[i]
+    const targetUrl = `${targetBase}${url.pathname}${url.search}${url.hash}`
     
-    console.log('Response status:', response.status)
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+    console.log(`Trying Space ${i + 1}/${spaces.length}:`, targetBase)
+  
+    try {
+      // Проксируем запрос к Hugging Face Space
+      const response = await fetch(targetUrl, {
+        method: request.method,
+        headers: {
+          'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': request.headers.get('Accept') || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': request.headers.get('Accept-Language') || 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Referer': targetBase + '/',
+          'Origin': targetBase,
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        },
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
+        redirect: 'follow'
+      })
+      
+      console.log(`Space ${i + 1} response status:`, response.status)
+      
+      // Если получили ошибку (4xx, 5xx), пробуем следующий Space
+      if (response.status >= 400) {
+        console.log(`Space ${i + 1} failed with status ${response.status}, trying next...`)
+        if (i < spaces.length - 1) {
+          continue // Пробуем следующий Space
+        }
+        // Если это последний Space, все равно возвращаем ответ
+      }
     
     // Создаем новые заголовки
     const newHeaders = new Headers()
@@ -95,12 +109,13 @@ async function handleRequest(request) {
       html = html.replace(/<meta[^>]*http-equiv=["']X-Frame-Options["'][^>]*>/gi, '')
       html = html.replace(/<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/gi, '')
       
-      // Заменяем абсолютные URL на относительные через прокси
-      html = html.replace(/href=["']https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, 'href="/')
-      html = html.replace(/src=["']https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, 'src="/')
-      
-      // Также заменяем в JavaScript коде
-      html = html.replace(/https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, '/')
+      // Заменяем абсолютные URL на относительные через прокси для всех Space'ов
+      for (const space of spaces) {
+        const spaceDomain = space.replace('https://', '').replace(/\./g, '\\.')
+        html = html.replace(new RegExp(`href=["']https://${spaceDomain}/`, 'g'), 'href="/')
+        html = html.replace(new RegExp(`src=["']https://${spaceDomain}/`, 'g'), 'src="/')
+        html = html.replace(new RegExp(`https://${spaceDomain}/`, 'g'), '/')
+      }
       
       return new Response(html, {
         status: response.status,
@@ -109,21 +124,34 @@ async function handleRequest(request) {
       })
     }
     
-    // Для всех остальных файлов (CSS, JS, изображения, API) возвращаем как есть
-    const body = await response.arrayBuffer()
-    
-    return new Response(body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders
-    })
-    
-  } catch (error) {
-    console.error('Error in handleRequest:', error)
-    return new Response(`Proxy error: ${error.message}\n\nStack: ${error.stack}`, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    })
+      // Для всех остальных файлов (CSS, JS, изображения, API) возвращаем как есть
+      const body = await response.arrayBuffer()
+      
+      return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders
+      })
+      
+    } catch (error) {
+      console.error(`Error with Space ${i + 1}:`, error.message)
+      // Если это не последний Space, пробуем следующий
+      if (i < spaces.length - 1) {
+        console.log(`Space ${i + 1} failed, trying next...`)
+        continue
+      }
+      // Если это последний Space, возвращаем ошибку
+      return new Response(`Proxy error: All spaces failed. Last error: ${error.message}\n\nStack: ${error.stack}`, {
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' }
+      })
+    }
   }
+  
+  // Если дошли сюда, значит все Space'ы не сработали
+  return new Response('All Hugging Face Spaces are unavailable', {
+    status: 503,
+    headers: { 'Content-Type': 'text/plain' }
+  })
 }
 
