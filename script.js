@@ -12,7 +12,8 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Упрощенная проверка загрузки iframe - только панель управления
+// Проверка загрузки iframe и fallback при ошибке
+// Hugging Face блокирует встраивание через X-Frame-Options/CSP
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
@@ -25,6 +26,15 @@ window.addEventListener('load', () => {
     console.error('Не найдены необходимые элементы');
     return;
   }
+  
+  console.log('🔍 Начинаем проверку iframe...');
+  console.log('📍 URL iframe:', iframe.src);
+  console.log('ℹ️ Используем OOTDiffusion (levihsu-ootdiffusion.hf.space)');
+  
+  let isBlocked = false;
+  let checkCount = 0;
+  const maxChecks = 5;
+  let loadTimeout;
   
   const hideLoading = () => {
     if (loading) {
@@ -56,16 +66,58 @@ window.addEventListener('load', () => {
     }
   };
   
-  // Показываем iframe сразу
-  iframe.style.display = 'block';
+  const updateStatus = (text, className = '') => {
+    if (status) {
+      status.textContent = text;
+      status.className = 'space-status ' + className;
+    }
+    // Также обновляем текст загрузки для большей ясности
+    const loadingText = document.getElementById('loading-status-text');
+    if (loadingText) {
+      if (text.includes('Загрузка') || text.includes('Подключение')) {
+        loadingText.textContent = text.replace(/[🔄✅❌]/g, '').trim();
+      } else if (text.includes('загружена')) {
+        loadingText.textContent = 'Готово!';
+      } else if (text.includes('не удалось') || text.includes('недоступен')) {
+        loadingText.textContent = 'Space недоступен';
+      }
+    }
+  };
   
-  // Простая проверка - если iframe загрузился, показываем панель
-  iframe.addEventListener('load', () => {
-    console.log('📥 Iframe загружен');
-    setTimeout(() => {
-      showIframe();
-    }, 1000); // Небольшая задержка для полной загрузки
-  });
+  const checkIframe = () => {
+    checkCount++;
+    
+    // Проверяем, загрузился ли iframe по другим признакам
+    // Не пытаемся читать document (это всегда SecurityError для cross-origin)
+    
+    // Проверяем, что iframe видим и имеет размеры
+    const iframeRect = iframe.getBoundingClientRect();
+    const isVisible = iframeRect.width > 0 && iframeRect.height > 0;
+    
+    // Если iframe видим, считаем что загрузился (даже если контент еще грузится)
+    if (isVisible) {
+      // Iframe загружен и видим
+      if (!isBlocked) {
+        console.log('✅ Iframe видим, считаем загруженным!');
+        updateStatus('✅ Виртуальная примерка загружена', 'success');
+        showIframe();
+        return true;
+      }
+      return true;
+    } else {
+      // Еще загружается
+      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: загрузка... (visible: ${isVisible})`);
+      updateStatus(`🔄 Загрузка ${checkCount}/${maxChecks}...`, '');
+      
+      if (checkCount >= maxChecks && !isBlocked) {
+        console.log('❌ Iframe не загрузился за отведенное время, показываем fallback');
+        updateStatus('❌ Не удалось загрузить', 'error');
+        isBlocked = true;
+        showFallback();
+      }
+      return false;
+    }
+  };
   
   // Кнопка перезагрузки
   if (btnReload) {
@@ -85,6 +137,17 @@ window.addEventListener('load', () => {
       }
     });
   }
+  
+  // Показываем iframe сразу
+  iframe.style.display = 'block';
+  
+  // Простая проверка - если iframe загрузился, показываем панель
+  iframe.addEventListener('load', () => {
+    console.log('📥 Iframe загружен');
+    setTimeout(() => {
+      showIframe();
+    }, 1000); // Небольшая задержка для полной загрузки
+  });
   
   // Если через 8 секунд не загрузилось, показываем fallback
   setTimeout(() => {
