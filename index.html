@@ -53,7 +53,13 @@
         <h3>Попробуйте сами</h3>
         <p class="try-text">Загрузите фото человека и одежду, чтобы увидеть результат</p>
         <div class="iframe-container">
-          <!-- Пробуем разные способы обхода блокировки -->
+          <!-- 
+            ⚠️ ВАЖНО: Hugging Face блокирует встраивание через X-Frame-Options
+            Решение: используй прокси через Cloudflare Workers (см. proxy-solution.md)
+            
+            После настройки прокси замени URL ниже на твой прокси URL:
+            src="https://your-proxy.your-subdomain.workers.dev/"
+          -->
           <iframe 
             id="vton-iframe"
             src="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
@@ -67,12 +73,20 @@
           </iframe>
           <div id="iframe-fallback" class="iframe-fallback" style="display: none;">
             <div class="fallback-content">
-              <p class="fallback-text">💡 Виртуальная примерка не может быть встроена из-за ограничений безопасности.</p>
+              <div class="fallback-icon">🔒</div>
+              <h3 class="fallback-title">Встраивание заблокировано</h3>
+              <p class="fallback-text">
+                Hugging Face блокирует встраивание этого Space через iframe из-за политики безопасности.
+              </p>
+              <p class="fallback-text-small">
+                💡 <strong>Решение:</strong> Настрой прокси через Cloudflare Workers (см. файл <code>proxy-solution.md</code>) 
+                или открой демо в новой вкладке.
+              </p>
               <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
                  target="_blank" 
                  rel="noopener" 
-                 class="btn btn-primary">
-                🚀 Открыть в новой вкладке
+                 class="btn btn-primary btn-large">
+                🚀 Открыть виртуальную примерку в новой вкладке
               </a>
             </div>
           </div>

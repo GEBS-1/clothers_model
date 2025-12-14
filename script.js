@@ -13,46 +13,69 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // Проверка загрузки iframe и fallback при ошибке
+// Hugging Face блокирует встраивание через X-Frame-Options/CSP
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
   
   if (iframe && fallback) {
-    // Проверяем через 5 секунд, загрузился ли iframe
-    setTimeout(() => {
+    let isBlocked = false;
+    let checkCount = 0;
+    const maxChecks = 3;
+    
+    const checkIframe = () => {
+      checkCount++;
       try {
         // Пытаемся получить доступ к содержимому iframe
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         // Если дошли сюда без ошибки, iframe загрузился
-        console.log('Iframe загружен успешно');
+        if (!isBlocked) {
+          console.log('✅ Iframe загружен успешно');
+        }
+        return true;
       } catch (e) {
         // Ошибка доступа (403/CORS) - значит iframe заблокирован
-        console.log('Iframe заблокирован, показываем fallback');
-        iframe.style.display = 'none';
-        fallback.style.display = 'flex';
+        console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: заблокирован (${e.name})`);
+        if (checkCount >= maxChecks && !isBlocked) {
+          console.log('❌ Iframe окончательно заблокирован, показываем fallback');
+          isBlocked = true;
+          iframe.style.display = 'none';
+          fallback.style.display = 'flex';
+        }
+        return false;
       }
-    }, 5000);
+    };
+    
+    // Проверяем сразу
+    setTimeout(() => {
+      if (!checkIframe() && checkCount < maxChecks) {
+        // Проверяем через 3 секунды
+        setTimeout(() => {
+          if (!checkIframe() && checkCount < maxChecks) {
+            // Финальная проверка через еще 3 секунды
+            setTimeout(() => {
+              checkIframe();
+            }, 3000);
+          }
+        }, 3000);
+      }
+    }, 2000);
     
     // Также слушаем событие ошибки загрузки
     iframe.addEventListener('error', () => {
-      console.log('Iframe error event');
-      iframe.style.display = 'none';
-      fallback.style.display = 'flex';
+      console.log('❌ Iframe error event');
+      if (!isBlocked) {
+        isBlocked = true;
+        iframe.style.display = 'none';
+        fallback.style.display = 'flex';
+      }
     });
     
     // Проверяем по событию load
     iframe.addEventListener('load', () => {
       setTimeout(() => {
-        try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          // Если можем получить доступ, значит все ок
-        } catch (e) {
-          // Не можем получить доступ - значит заблокирован
-          console.log('Iframe загружен, но заблокирован (403)');
-          iframe.style.display = 'none';
-          fallback.style.display = 'flex';
-        }
-      }, 1000);
+        checkIframe();
+      }, 2000);
     });
   }
 });
