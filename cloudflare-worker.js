@@ -12,7 +12,14 @@
 // ES Modules формат (требуется для Cloudflare Workers)
 export default {
   async fetch(request, env, ctx) {
-    return handleRequest(request)
+    try {
+      return await handleRequest(request)
+    } catch (error) {
+      return new Response(`Worker error: ${error.message}\n\nStack: ${error.stack}`, {
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' }
+      })
+    }
   }
 }
 
@@ -23,19 +30,29 @@ async function handleRequest(request) {
   const targetBase = 'https://kwai-kolors-kolors-virtual-try-on.hf.space'
   const targetUrl = `${targetBase}${url.pathname}${url.search}${url.hash}`
   
+  // Логирование для отладки
+  console.log('Proxying request to:', targetUrl)
+  
   try {
     // Проксируем запрос к Hugging Face Space
     const response = await fetch(targetUrl, {
       method: request.method,
       headers: {
-        'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0',
-        'Accept': request.headers.get('Accept') || '*/*',
+        'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': request.headers.get('Accept') || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': request.headers.get('Accept-Language') || 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'Referer': targetBase + '/',
-        'Origin': targetBase
+        'Origin': targetBase,
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
       },
-      body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null
+      body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
+      redirect: 'follow'
     })
+    
+    console.log('Response status:', response.status)
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
     
     // Создаем новые заголовки
     const newHeaders = new Headers()
@@ -61,8 +78,18 @@ async function handleRequest(request) {
     
     // Если это HTML, модифицируем его
     const contentType = response.headers.get('content-type') || ''
+    console.log('Content-Type:', contentType)
+    
     if (contentType.includes('text/html')) {
       let html = await response.text()
+      console.log('HTML length:', html.length)
+      
+      if (!html || html.length === 0) {
+        return new Response('Empty HTML response from target', {
+          status: 500,
+          headers: { 'Content-Type': 'text/plain' }
+        })
+      }
       
       // Удаляем мета-теги, которые блокируют встраивание
       html = html.replace(/<meta[^>]*http-equiv=["']X-Frame-Options["'][^>]*>/gi, '')
@@ -72,6 +99,9 @@ async function handleRequest(request) {
       html = html.replace(/href=["']https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, 'href="/')
       html = html.replace(/src=["']https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, 'src="/')
       
+      // Также заменяем в JavaScript коде
+      html = html.replace(/https:\/\/kwai-kolors-kolors-virtual-try-on\.hf\.space\//g, '/')
+      
       return new Response(html, {
         status: response.status,
         statusText: response.statusText,
@@ -80,14 +110,17 @@ async function handleRequest(request) {
     }
     
     // Для всех остальных файлов (CSS, JS, изображения, API) возвращаем как есть
-    return new Response(response.body, {
+    const body = await response.arrayBuffer()
+    
+    return new Response(body, {
       status: response.status,
       statusText: response.statusText,
       headers: newHeaders
     })
     
   } catch (error) {
-    return new Response(`Proxy error: ${error.message}`, {
+    console.error('Error in handleRequest:', error)
+    return new Response(`Proxy error: ${error.message}\n\nStack: ${error.stack}`, {
       status: 500,
       headers: { 'Content-Type': 'text/plain' }
     })
