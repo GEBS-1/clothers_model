@@ -17,80 +17,146 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
+  const loading = document.getElementById('iframe-loading');
+  const controls = document.getElementById('iframe-controls');
+  const status = document.getElementById('space-status');
+  const btnReload = document.getElementById('btn-reload');
   
-  if (iframe && fallback) {
-    console.log('🔍 Начинаем проверку iframe...');
-    console.log('📍 URL iframe:', iframe.src);
-    
-    let isBlocked = false;
-    let checkCount = 0;
-    const maxChecks = 5;
-    
-    const checkIframe = () => {
-      checkCount++;
-      try {
-        // Пытаемся получить доступ к содержимому iframe
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        // Если дошли сюда без ошибки, iframe загрузился
-        if (!isBlocked) {
-          console.log('✅ Iframe загружен успешно!');
-          console.log('📄 Iframe document:', iframeDoc ? 'доступен' : 'недоступен');
-        }
-        return true;
-      } catch (e) {
-        // Ошибка доступа (403/CORS) - значит iframe заблокирован
-        console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: ${e.name} - ${e.message}`);
-        if (checkCount >= maxChecks && !isBlocked) {
-          console.log('❌ Iframe окончательно заблокирован, показываем fallback');
-          console.log('💡 Проверь:');
-          console.log('   1. Работает ли Worker: открой https://clothersmodel.gebraunt.workers.dev/ в новой вкладке');
-          console.log('   2. Есть ли ошибки в Network tab (F12)');
-          console.log('   3. Правильно ли настроен Worker прокси');
-          isBlocked = true;
-          iframe.style.display = 'none';
-          fallback.style.display = 'flex';
-        }
-        return false;
-      }
-    };
-    
-    // Проверяем сразу
-    setTimeout(() => {
-      if (!checkIframe() && checkCount < maxChecks) {
-        // Проверяем через 3 секунды
-        setTimeout(() => {
-          if (!checkIframe() && checkCount < maxChecks) {
-            // Еще проверки
-            setTimeout(() => {
-              if (!checkIframe() && checkCount < maxChecks) {
-                setTimeout(() => {
-                  checkIframe();
-                }, 3000);
-              }
-            }, 3000);
-          }
-        }, 3000);
-      }
-    }, 3000);
-    
-    // Также слушаем событие ошибки загрузки
-    iframe.addEventListener('error', (e) => {
-      console.log('❌ Iframe error event:', e);
+  if (!iframe || !fallback || !loading || !controls || !status) {
+    console.error('Не найдены необходимые элементы');
+    return;
+  }
+  
+  console.log('🔍 Начинаем проверку iframe...');
+  console.log('📍 URL iframe:', iframe.src);
+  
+  let isBlocked = false;
+  let checkCount = 0;
+  const maxChecks = 5;
+  let loadTimeout;
+  
+  const hideLoading = () => {
+    if (loading) {
+      loading.style.display = 'none';
+    }
+  };
+  
+  const showControls = () => {
+    if (controls) {
+      controls.style.display = 'block';
+    }
+  };
+  
+  const showIframe = () => {
+    if (iframe) {
+      iframe.style.display = 'block';
+    }
+    hideLoading();
+    showControls();
+  };
+  
+  const showFallback = () => {
+    if (fallback) {
+      fallback.style.display = 'flex';
+    }
+    hideLoading();
+    if (controls) {
+      controls.style.display = 'none';
+    }
+  };
+  
+  const updateStatus = (text, className = '') => {
+    if (status) {
+      status.textContent = text;
+      status.className = 'space-status ' + className;
+    }
+  };
+  
+  const checkIframe = () => {
+    checkCount++;
+    try {
+      // Пытаемся получить доступ к содержимому iframe
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      // Если дошли сюда без ошибки, iframe загрузился
       if (!isBlocked) {
-        isBlocked = true;
-        iframe.style.display = 'none';
-        fallback.style.display = 'flex';
+        console.log('✅ Iframe загружен успешно!');
+        updateStatus('✅ Виртуальная примерка загружена', 'success');
+        showIframe();
+        return true;
       }
-    });
-    
-    // Проверяем по событию load
-    iframe.addEventListener('load', () => {
-      console.log('📥 Iframe load event сработал');
-      setTimeout(() => {
-        checkIframe();
-      }, 2000);
+      return true;
+    } catch (e) {
+      // Ошибка доступа (403/CORS) - значит iframe заблокирован
+      console.log(`⚠️ Iframe проверка ${checkCount}/${maxChecks}: ${e.name} - ${e.message}`);
+      updateStatus(`🔄 Проверка ${checkCount}/${maxChecks}...`, '');
+      
+      if (checkCount >= maxChecks && !isBlocked) {
+        console.log('❌ Iframe окончательно заблокирован, показываем fallback');
+        updateStatus('❌ Не удалось загрузить', 'error');
+        isBlocked = true;
+        showFallback();
+      }
+      return false;
+    }
+  };
+  
+  // Кнопка перезагрузки
+  if (btnReload) {
+    btnReload.addEventListener('click', () => {
+      console.log('🔄 Перезагрузка iframe...');
+      isBlocked = false;
+      checkCount = 0;
+      if (iframe) {
+        iframe.src = iframe.src; // Перезагружаем
+      }
+      if (loading) {
+        loading.style.display = 'flex';
+      }
+      if (fallback) {
+        fallback.style.display = 'none';
+      }
+      updateStatus('🔄 Перезагрузка...', '');
     });
   }
+  
+  // Проверяем сразу
+  updateStatus('🔄 Загрузка...', '');
+  loadTimeout = setTimeout(() => {
+    if (!checkIframe() && checkCount < maxChecks) {
+      // Проверяем через 3 секунды
+      setTimeout(() => {
+        if (!checkIframe() && checkCount < maxChecks) {
+          // Еще проверки
+          setTimeout(() => {
+            if (!checkIframe() && checkCount < maxChecks) {
+              setTimeout(() => {
+                checkIframe();
+              }, 3000);
+            }
+          }, 3000);
+        }
+      }, 3000);
+    }
+  }, 3000);
+  
+  // Также слушаем событие ошибки загрузки
+  iframe.addEventListener('error', (e) => {
+    console.log('❌ Iframe error event:', e);
+    if (!isBlocked) {
+      isBlocked = true;
+      updateStatus('❌ Ошибка загрузки', 'error');
+      showFallback();
+    }
+  });
+  
+  // Проверяем по событию load
+  iframe.addEventListener('load', () => {
+    console.log('📥 Iframe load event сработал');
+    clearTimeout(loadTimeout);
+    setTimeout(() => {
+      checkIframe();
+    }, 2000);
+  });
 });
 
 // Intersection Observer for fade-in animations

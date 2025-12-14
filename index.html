@@ -53,13 +53,47 @@
         <h3>Попробуйте сами</h3>
         <p class="try-text">Загрузите фото человека и одежду, чтобы увидеть результат</p>
         <div class="iframe-container">
-          <!-- 
-            ⚠️ ВАЖНО: Hugging Face блокирует встраивание через X-Frame-Options
-            Решение: используй прокси через Cloudflare Workers (см. proxy-solution.md)
-            
-            После настройки прокси замени URL ниже на твой прокси URL:
-            src="https://your-proxy.your-subdomain.workers.dev/"
-          -->
+          <!-- Индикатор загрузки -->
+          <div id="iframe-loading" class="iframe-loading">
+            <div class="loading-content">
+              <div class="loading-spinner"></div>
+              <h3>Загрузка виртуальной примерки...</h3>
+              <p>Пожалуйста, подождите</p>
+              <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Статус и кнопки управления -->
+          <div id="iframe-controls" class="iframe-controls" style="display: none;">
+            <div class="controls-info">
+              <span id="space-status" class="space-status">🔄 Проверка доступности...</span>
+            </div>
+            <div class="controls-buttons">
+              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
+                 target="_blank" 
+                 rel="noopener" 
+                 class="btn btn-secondary btn-small"
+                 id="btn-space1">
+                📸 Space 1 (Kolors)
+              </a>
+              <a href="https://levihsu-ootdiffusion.hf.space/" 
+                 target="_blank" 
+                 rel="noopener" 
+                 class="btn btn-secondary btn-small"
+                 id="btn-space2">
+                👔 Space 2 (OOTDiffusion)
+              </a>
+              <button class="btn btn-primary btn-small" id="btn-reload">
+                🔄 Перезагрузить
+              </button>
+            </div>
+          </div>
+          
+          <!-- Iframe -->
           <iframe 
             id="vton-iframe"
             src="https://clothersmodel.gebraunt.workers.dev/" 
@@ -69,25 +103,32 @@
             title="Virtual Try-On Demo"
             loading="eager"
             referrerpolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation">
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation"
+            style="display: none;">
           </iframe>
+          
+          <!-- Fallback при ошибке -->
           <div id="iframe-fallback" class="iframe-fallback" style="display: none;">
             <div class="fallback-content">
-              <div class="fallback-icon">🔒</div>
-              <h3 class="fallback-title">Встраивание заблокировано</h3>
+              <div class="fallback-icon">⚠️</div>
+              <h3 class="fallback-title">Не удалось загрузить демо</h3>
               <p class="fallback-text">
-                Hugging Face блокирует встраивание этого Space через iframe из-за политики безопасности.
+                Виртуальная примерка не может быть встроена. Попробуйте открыть один из Space'ов напрямую.
               </p>
-              <p class="fallback-text-small">
-                💡 <strong>Решение:</strong> Настрой прокси через Cloudflare Workers (см. файл <code>proxy-solution.md</code>) 
-                или открой демо в новой вкладке.
-              </p>
-              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
-                 target="_blank" 
-                 rel="noopener" 
-                 class="btn btn-primary btn-large">
-                🚀 Открыть виртуальную примерку в новой вкладке
-              </a>
+              <div class="fallback-buttons">
+                <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
+                   target="_blank" 
+                   rel="noopener" 
+                   class="btn btn-primary">
+                  📸 Открыть Kolors VTON
+                </a>
+                <a href="https://levihsu-ootdiffusion.hf.space/" 
+                   target="_blank" 
+                   rel="noopener" 
+                   class="btn btn-primary">
+                  👔 Открыть OOTDiffusion
+                </a>
+              </div>
             </div>
           </div>
         </div>
