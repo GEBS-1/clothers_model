@@ -12,15 +12,19 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Улучшенная проверка загрузки iframe с обработкой ошибок
+// Упрощенная проверка загрузки iframe с диагностикой
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
   const loading = document.getElementById('iframe-loading');
   
   if (!iframe || !fallback || !loading) {
+    console.error('Не найдены элементы iframe/fallback/loading');
     return;
   }
+  
+  console.log('🔍 Начинаем загрузку iframe...');
+  console.log('📍 URL:', iframe.src);
   
   let isLoaded = false;
   let hasError = false;
@@ -28,12 +32,14 @@ window.addEventListener('load', () => {
   const hideLoading = () => {
     if (loading) {
       loading.style.display = 'none';
+      console.log('✅ Индикатор загрузки скрыт');
     }
   };
   
   const showFallback = () => {
     if (fallback && !hasError) {
       hasError = true;
+      console.log('❌ Показываем fallback - iframe не загрузился');
       fallback.style.display = 'flex';
       if (iframe) {
         iframe.style.display = 'none';
@@ -42,26 +48,29 @@ window.addEventListener('load', () => {
     hideLoading();
   };
   
-  const showIframe = () => {
-    if (iframe && !hasError) {
-      // Iframe уже видим, просто скрываем загрузку
-      hideLoading();
-    }
-  };
+  // Проверяем доступность Space перед загрузкой
+  fetch(iframe.src, { method: 'HEAD', mode: 'no-cors' })
+    .then(() => {
+      console.log('✅ Space доступен (HEAD запрос прошел)');
+    })
+    .catch((err) => {
+      console.warn('⚠️ HEAD запрос не прошел:', err);
+    });
   
-  // Упрощенная версия - только прямое подключение
   // Обработка успешной загрузки
   iframe.addEventListener('load', () => {
+    console.log('📥 Событие load сработало');
     if (!hasError) {
       isLoaded = true;
       // Даем время на рендеринг контента Gradio
       setTimeout(() => {
         const iframeRect = iframe.getBoundingClientRect();
+        console.log(`📐 Iframe размеры: ${iframeRect.width}x${iframeRect.height}`);
         if (iframeRect.width > 0 && iframeRect.height > 0) {
-          // Iframe загружен и видим - скрываем загрузку
+          console.log('✅ Iframe загружен и видим');
           hideLoading();
         } else {
-          // Iframe пустой - показываем fallback
+          console.log('❌ Iframe пустой - показываем fallback');
           showFallback();
         }
       }, 4000);
@@ -69,35 +78,39 @@ window.addEventListener('load', () => {
   });
   
   // Обработка ошибок загрузки
-  iframe.addEventListener('error', () => {
-    console.error('Iframe error: не удалось загрузить');
+  iframe.addEventListener('error', (e) => {
+    console.error('❌ Iframe error event:', e);
     showFallback();
   });
   
-  // Скрываем загрузку через 5 секунд, если iframe видим
+  // Проверка через 5 секунд
   setTimeout(() => {
     if (!hasError) {
       const iframeRect = iframe.getBoundingClientRect();
+      console.log(`⏱️ Проверка через 5 сек: ${iframeRect.width}x${iframeRect.height}`);
       if (iframeRect.width > 0 && iframeRect.height > 0) {
-        // Iframe видим - скрываем загрузку
+        console.log('✅ Iframe видим - скрываем загрузку');
         hideLoading();
         isLoaded = true;
       }
     }
   }, 5000);
   
-  // Финальная проверка через 12 секунд
+  // Финальная проверка через 10 секунд
   setTimeout(() => {
     if (!isLoaded && !hasError) {
       const iframeRect = iframe.getBoundingClientRect();
+      console.log(`⏱️ Финальная проверка: ${iframeRect.width}x${iframeRect.height}`);
       if (iframeRect.width === 0 || iframeRect.height === 0) {
+        console.log('❌ Iframe не загрузился - показываем fallback');
         showFallback();
       } else {
+        console.log('✅ Iframe загружен');
         hideLoading();
         isLoaded = true;
       }
     }
-  }, 12000);
+  }, 10000);
 });
 
 // Intersection Observer for fade-in animations
