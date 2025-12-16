@@ -58,7 +58,7 @@
             <div class="loading-content">
               <div class="loading-spinner"></div>
               <h3>Загрузка виртуальной примерки...</h3>
-              <p id="loading-status-text">Подключение к OOTDiffusion Space...</p>
+              <p id="loading-status-text">Подключение через прокси...</p>
               <div class="loading-dots">
                 <span></span>
                 <span></span>
@@ -99,10 +99,10 @@
           </div>
           
           <!-- Iframe -->
-          <!-- Прямое подключение к OOTDiffusion Space -->
+          <!-- Подключение через Cloudflare Worker (обходит блокировку iframe) -->
           <iframe 
             id="vton-iframe"
-            src="https://levihsu-ootdiffusion.hf.space/" 
+            src="https://clothersmodel.gebraunt.workers.dev/" 
             frameborder="0" 
             allow="camera; microphone; fullscreen; autoplay"
             allowfullscreen
