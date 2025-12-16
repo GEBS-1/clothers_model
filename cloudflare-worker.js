@@ -43,6 +43,8 @@ async function handleRequest(request) {
                        url.pathname.endsWith('.woff') ||
                        url.pathname.endsWith('.woff2')
   
+  let finalResponse = null
+  
   // Пробуем каждый Space по очереди
   for (let i = 0; i < spaces.length; i++) {
     const targetBase = spaces[i]
@@ -185,11 +187,12 @@ async function handleRequest(request) {
       // Для всех остальных файлов (CSS, JS, изображения, API) возвращаем как есть
       const body = await response.arrayBuffer()
       
-      return new Response(body, {
+      finalResponse = new Response(body, {
         status: response.status,
         statusText: response.statusText,
         headers: newHeaders
       })
+      break // Успешно получили файл, выходим из цикла
       
     } catch (error) {
       console.error(`Error with Space ${i + 1}:`, error.message)
@@ -204,6 +207,11 @@ async function handleRequest(request) {
         headers: { 'Content-Type': 'text/plain' }
       })
     }
+  }
+  
+  // Если получили ответ, возвращаем его
+  if (finalResponse) {
+    return finalResponse
   }
   
   // Если дошли сюда, значит все Space'ы не сработали
