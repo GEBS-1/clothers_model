@@ -92,15 +92,15 @@
           </div>
           
           <!-- Iframe -->
-          <!-- Пробуем сначала напрямую OOTDiffusion (может разрешать встраивание) -->
+          <!-- Используем Worker для обхода блокировки встраивания -->
           <iframe 
             id="vton-iframe"
-            src="https://levihsu-ootdiffusion.hf.space/" 
+            src="https://clothersmodel.gebraunt.workers.dev/" 
             frameborder="0" 
             allow="camera; microphone; fullscreen; autoplay"
             allowfullscreen
             title="Virtual Try-On Demo"
-            loading="eager"
+            loading="lazy"
             referrerpolicy="no-referrer"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation"
             style="display: none;">

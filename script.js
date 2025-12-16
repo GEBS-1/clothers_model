@@ -39,20 +39,25 @@ window.addEventListener('load', () => {
   iframe.style.display = 'block';
   
   // Когда загрузится - скрываем индикатор загрузки
+  let loadTimeout;
   iframe.addEventListener('load', () => {
+    clearTimeout(loadTimeout);
+    // Скрываем загрузку сразу, без задержки
     hideLoading();
   });
   
-  // Если через 8 секунд не загрузилось - показываем fallback
+  // Скрываем загрузку через 3 секунды, даже если load не сработал (iframe может грузиться внутри)
+  loadTimeout = setTimeout(() => {
+    hideLoading();
+  }, 3000);
+  
+  // Если через 10 секунд iframe не видим - показываем fallback
   setTimeout(() => {
     const iframeRect = iframe.getBoundingClientRect();
     if (iframeRect.width === 0 || iframeRect.height === 0) {
       showFallback();
-    } else {
-      // Если iframe видим, но загрузка еще не скрылась - скрываем её
-      hideLoading();
     }
-  }, 8000);
+  }, 10000);
 });
 
 // Intersection Observer for fade-in animations
