@@ -51,7 +51,7 @@ window.addEventListener('load', () => {
   
   // Пробуем загрузить напрямую, если не работает - через Worker
   let currentSrc = iframe.src;
-  const directUrl = 'https://levihsu-ootdiffusion.hf.space/';
+  const directUrl = 'https://kwai-kolors-kolors-virtual-try-on.hf.space/';
   const workerUrl = 'https://clothersmodel.gebraunt.workers.dev/';
   
   // Обработка успешной загрузки

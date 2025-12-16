@@ -58,7 +58,7 @@
             <div class="loading-content">
               <div class="loading-spinner"></div>
               <h3>Загрузка виртуальной примерки...</h3>
-              <p id="loading-status-text">Подключение к OOTDiffusion Space...</p>
+              <p id="loading-status-text">Подключение к Kolors VTON Space...</p>
               <div class="loading-dots">
                 <span></span>
                 <span></span>
@@ -77,12 +77,19 @@
             </div>
             <div class="controls-buttons">
               <!-- Кнопки Space закомментированы
-              <a href="https://levihsu-ootdiffusion.hf.space/" 
+              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
                  target="_blank" 
                  rel="noopener" 
                  class="btn btn-secondary btn-small"
                  id="btn-space1">
-                👔 OOTDiffusion (основной)
+                📸 Kolors VTON (основной)
+              </a>
+              <a href="https://levihsu-ootdiffusion.hf.space/" 
+                 target="_blank" 
+                 rel="noopener" 
+                 class="btn btn-secondary btn-small"
+                 id="btn-space2">
+                👔 OOTDiffusion (запасной)
               </a>
               -->
               <button class="btn btn-primary btn-small" id="btn-reload">
@@ -95,7 +102,7 @@
           <!-- Пробуем сначала напрямую, если не работает - через Worker -->
           <iframe 
             id="vton-iframe"
-            src="https://levihsu-ootdiffusion.hf.space/" 
+            src="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
             frameborder="0" 
             allow="camera; microphone; fullscreen; autoplay"
             allowfullscreen
@@ -116,11 +123,11 @@
               <p class="fallback-text-small">
                 💡 Откройте Space напрямую в новой вкладке для тестирования виртуальной примерки.
               </p>
-              <a href="https://levihsu-ootdiffusion.hf.space/" 
+              <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space/" 
                  target="_blank" 
                  rel="noopener" 
                  class="btn btn-primary btn-large">
-                🚀 Открыть OOTDiffusion Space
+                🚀 Открыть Kolors VTON Space
               </a>
             </div>
           </div>

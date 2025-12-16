@@ -16,8 +16,9 @@ export default {
 async function handleRequest(request) {
   const url = new URL(request.url)
   
-  // Используем OOTDiffusion Space
-  const targetBase = 'https://levihsu-ootdiffusion.hf.space'
+  // Используем Kolors VTON Space
+  const targetBase = 'https://kwai-kolors-kolors-virtual-try-on.hf.space'
+  // const targetBase = 'https://levihsu-ootdiffusion.hf.space' // Закомментировано
   const targetUrl = `${targetBase}${url.pathname}${url.search}${url.hash}`
   
   console.log(`Proxying to: ${targetUrl}`)
