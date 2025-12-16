@@ -44,28 +44,27 @@ window.addEventListener('load', () => {
   
   const showIframe = () => {
     if (iframe && !hasError) {
-      iframe.style.display = 'block';
+      // Iframe уже видим, просто скрываем загрузку
       hideLoading();
     }
   };
   
-  // Показываем iframe сразу
-  iframe.style.display = 'block';
-  
+  // Iframe уже видим (убрали display: none из HTML)
   // Обработка успешной загрузки
   iframe.addEventListener('load', () => {
     if (!hasError) {
       isLoaded = true;
-      // Проверяем, что iframe действительно загрузился (не пустой)
+      // Даем время на рендеринг контента Gradio
       setTimeout(() => {
         const iframeRect = iframe.getBoundingClientRect();
         if (iframeRect.width > 0 && iframeRect.height > 0) {
+          // Iframe загружен и видим - скрываем загрузку
           showIframe();
         } else {
           // Iframe пустой - показываем fallback
           showFallback();
         }
-      }, 2000);
+      }, 3000); // Увеличиваем время для загрузки Gradio
     }
   });
   
@@ -75,25 +74,24 @@ window.addEventListener('load', () => {
     showFallback();
   });
   
-  // Проверка через 5 секунд - если не загрузилось, показываем fallback
+  // Скрываем загрузку через 5 секунд, даже если load не сработал (Gradio может грузиться внутри)
   setTimeout(() => {
-    if (!isLoaded && !hasError) {
+    if (!hasError) {
       const iframeRect = iframe.getBoundingClientRect();
-      // Проверяем, есть ли контент в iframe
-      if (iframeRect.width === 0 || iframeRect.height === 0) {
-        showFallback();
-      } else {
-        // Iframe видим, но возможно еще грузится - скрываем загрузку
+      if (iframeRect.width > 0 && iframeRect.height > 0) {
+        // Iframe видим - скрываем загрузку, даже если событие load не сработало
         hideLoading();
+        isLoaded = true;
       }
     }
   }, 5000);
   
-  // Финальная проверка через 10 секунд
+  // Финальная проверка через 12 секунд - если iframe не видим, показываем fallback
   setTimeout(() => {
     if (!isLoaded && !hasError) {
       const iframeRect = iframe.getBoundingClientRect();
       if (iframeRect.width === 0 || iframeRect.height === 0) {
+        // Iframe не загрузился - показываем fallback
         showFallback();
       } else {
         // Если iframe видим, считаем что загрузился
@@ -101,7 +99,7 @@ window.addEventListener('load', () => {
         showIframe();
       }
     }
-  }, 10000);
+  }, 12000);
 });
 
 // Intersection Observer for fade-in animations
