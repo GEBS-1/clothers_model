@@ -49,7 +49,11 @@ window.addEventListener('load', () => {
     }
   };
   
-  // Iframe уже видим (убрали display: none из HTML)
+  // Пробуем загрузить напрямую, если не работает - через Worker
+  let currentSrc = iframe.src;
+  const directUrl = 'https://levihsu-ootdiffusion.hf.space/';
+  const workerUrl = 'https://clothersmodel.gebraunt.workers.dev/';
+  
   // Обработка успешной загрузки
   iframe.addEventListener('load', () => {
     if (!hasError) {
@@ -59,47 +63,63 @@ window.addEventListener('load', () => {
         const iframeRect = iframe.getBoundingClientRect();
         if (iframeRect.width > 0 && iframeRect.height > 0) {
           // Iframe загружен и видим - скрываем загрузку
-          showIframe();
+          hideLoading();
         } else {
-          // Iframe пустой - показываем fallback
-          showFallback();
+          // Iframe пустой - пробуем Worker
+          if (currentSrc === directUrl) {
+            console.log('Прямая загрузка не удалась, пробуем Worker...');
+            iframe.src = workerUrl;
+            currentSrc = workerUrl;
+          } else {
+            showFallback();
+          }
         }
-      }, 3000); // Увеличиваем время для загрузки Gradio
+      }, 4000);
     }
   });
   
   // Обработка ошибок загрузки
   iframe.addEventListener('error', () => {
     console.error('Iframe error: не удалось загрузить');
-    showFallback();
+    // Если была прямая ссылка, пробуем Worker
+    if (currentSrc === directUrl && !hasError) {
+      console.log('Пробуем через Worker...');
+      iframe.src = workerUrl;
+      currentSrc = workerUrl;
+    } else {
+      showFallback();
+    }
   });
   
-  // Скрываем загрузку через 5 секунд, даже если load не сработал (Gradio может грузиться внутри)
+  // Проверка через 6 секунд - если не загрузилось, пробуем Worker
   setTimeout(() => {
-    if (!hasError) {
+    if (!isLoaded && !hasError && currentSrc === directUrl) {
       const iframeRect = iframe.getBoundingClientRect();
-      if (iframeRect.width > 0 && iframeRect.height > 0) {
-        // Iframe видим - скрываем загрузку, даже если событие load не сработало
+      // Если iframe пустой или очень маленький - пробуем Worker
+      if (iframeRect.width === 0 || iframeRect.height < 100) {
+        console.log('Прямая загрузка не удалась, переключаемся на Worker...');
+        iframe.src = workerUrl;
+        currentSrc = workerUrl;
+      } else {
+        // Iframe видим - скрываем загрузку
         hideLoading();
         isLoaded = true;
       }
     }
-  }, 5000);
+  }, 6000);
   
-  // Финальная проверка через 12 секунд - если iframe не видим, показываем fallback
+  // Финальная проверка через 15 секунд
   setTimeout(() => {
     if (!isLoaded && !hasError) {
       const iframeRect = iframe.getBoundingClientRect();
       if (iframeRect.width === 0 || iframeRect.height === 0) {
-        // Iframe не загрузился - показываем fallback
         showFallback();
       } else {
-        // Если iframe видим, считаем что загрузился
+        hideLoading();
         isLoaded = true;
-        showIframe();
       }
     }
-  }, 12000);
+  }, 15000);
 });
 
 // Intersection Observer for fade-in animations
