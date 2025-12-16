@@ -149,6 +149,10 @@ async function handleRequest(request) {
       console.log('HTML length:', html.length)
       
       if (!html || html.length === 0) {
+        if (i < spaces.length - 1) {
+          console.log(`Space ${i + 1} returned empty HTML, trying next...`)
+          continue
+        }
         return new Response('Empty HTML response from target', {
           status: 500,
           headers: { 'Content-Type': 'text/plain' }
@@ -159,6 +163,9 @@ async function handleRequest(request) {
       html = html.replace(/<meta[^>]*http-equiv=["']X-Frame-Options["'][^>]*>/gi, '')
       html = html.replace(/<meta[^>]*http-equiv=["']Content-Security-Policy["'][^>]*>/gi, '')
       
+      // Удаляем frame-ancestors из CSP в script тегах
+      html = html.replace(/frame-ancestors[^;]*;?/gi, '')
+      
       // Заменяем абсолютные URL на относительные через прокси для всех Space'ов
       for (const space of spaces) {
         const spaceDomain = space.replace('https://', '').replace(/\./g, '\\.')
@@ -167,11 +174,12 @@ async function handleRequest(request) {
         html = html.replace(new RegExp(`https://${spaceDomain}/`, 'g'), '/')
       }
       
-      return new Response(html, {
+      finalResponse = new Response(html, {
         status: response.status,
         statusText: response.statusText,
         headers: newHeaders
       })
+      break // Успешно получили HTML, выходим из цикла
     }
     
       // Для всех остальных файлов (CSS, JS, изображения, API) возвращаем как есть

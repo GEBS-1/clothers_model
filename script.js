@@ -12,7 +12,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Упрощенная проверка загрузки iframe - без лишних проверок
+// Улучшенная проверка загрузки iframe с обработкой ошибок
 window.addEventListener('load', () => {
   const iframe = document.getElementById('vton-iframe');
   const fallback = document.getElementById('iframe-fallback');
@@ -22,6 +22,9 @@ window.addEventListener('load', () => {
     return;
   }
   
+  let isLoaded = false;
+  let hasError = false;
+  
   const hideLoading = () => {
     if (loading) {
       loading.style.display = 'none';
@@ -29,33 +32,74 @@ window.addEventListener('load', () => {
   };
   
   const showFallback = () => {
-    if (fallback) {
+    if (fallback && !hasError) {
+      hasError = true;
       fallback.style.display = 'flex';
+      if (iframe) {
+        iframe.style.display = 'none';
+      }
     }
     hideLoading();
+  };
+  
+  const showIframe = () => {
+    if (iframe && !hasError) {
+      iframe.style.display = 'block';
+      hideLoading();
+    }
   };
   
   // Показываем iframe сразу
   iframe.style.display = 'block';
   
-  // Когда загрузится - скрываем индикатор загрузки
-  let loadTimeout;
+  // Обработка успешной загрузки
   iframe.addEventListener('load', () => {
-    clearTimeout(loadTimeout);
-    // Скрываем загрузку сразу, без задержки
-    hideLoading();
+    if (!hasError) {
+      isLoaded = true;
+      // Проверяем, что iframe действительно загрузился (не пустой)
+      setTimeout(() => {
+        const iframeRect = iframe.getBoundingClientRect();
+        if (iframeRect.width > 0 && iframeRect.height > 0) {
+          showIframe();
+        } else {
+          // Iframe пустой - показываем fallback
+          showFallback();
+        }
+      }, 2000);
+    }
   });
   
-  // Скрываем загрузку через 3 секунды, даже если load не сработал (iframe может грузиться внутри)
-  loadTimeout = setTimeout(() => {
-    hideLoading();
-  }, 3000);
+  // Обработка ошибок загрузки
+  iframe.addEventListener('error', () => {
+    console.error('Iframe error: не удалось загрузить');
+    showFallback();
+  });
   
-  // Если через 10 секунд iframe не видим - показываем fallback
+  // Проверка через 5 секунд - если не загрузилось, показываем fallback
   setTimeout(() => {
-    const iframeRect = iframe.getBoundingClientRect();
-    if (iframeRect.width === 0 || iframeRect.height === 0) {
-      showFallback();
+    if (!isLoaded && !hasError) {
+      const iframeRect = iframe.getBoundingClientRect();
+      // Проверяем, есть ли контент в iframe
+      if (iframeRect.width === 0 || iframeRect.height === 0) {
+        showFallback();
+      } else {
+        // Iframe видим, но возможно еще грузится - скрываем загрузку
+        hideLoading();
+      }
+    }
+  }, 5000);
+  
+  // Финальная проверка через 10 секунд
+  setTimeout(() => {
+    if (!isLoaded && !hasError) {
+      const iframeRect = iframe.getBoundingClientRect();
+      if (iframeRect.width === 0 || iframeRect.height === 0) {
+        showFallback();
+      } else {
+        // Если iframe видим, считаем что загрузился
+        isLoaded = true;
+        showIframe();
+      }
     }
   }, 10000);
 });
