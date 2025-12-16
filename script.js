@@ -49,11 +49,7 @@ window.addEventListener('load', () => {
     }
   };
   
-  // Пробуем загрузить напрямую, если не работает - через Worker
-  let currentSrc = iframe.src;
-  const directUrl = 'https://kwai-kolors-kolors-virtual-try-on.hf.space/';
-  const workerUrl = 'https://clothersmodel.gebraunt.workers.dev/';
-  
+  // Упрощенная версия - только прямое подключение
   // Обработка успешной загрузки
   iframe.addEventListener('load', () => {
     if (!hasError) {
@@ -65,14 +61,8 @@ window.addEventListener('load', () => {
           // Iframe загружен и видим - скрываем загрузку
           hideLoading();
         } else {
-          // Iframe пустой - пробуем Worker
-          if (currentSrc === directUrl) {
-            console.log('Прямая загрузка не удалась, пробуем Worker...');
-            iframe.src = workerUrl;
-            currentSrc = workerUrl;
-          } else {
-            showFallback();
-          }
+          // Iframe пустой - показываем fallback
+          showFallback();
         }
       }, 4000);
     }
@@ -81,34 +71,22 @@ window.addEventListener('load', () => {
   // Обработка ошибок загрузки
   iframe.addEventListener('error', () => {
     console.error('Iframe error: не удалось загрузить');
-    // Если была прямая ссылка, пробуем Worker
-    if (currentSrc === directUrl && !hasError) {
-      console.log('Пробуем через Worker...');
-      iframe.src = workerUrl;
-      currentSrc = workerUrl;
-    } else {
-      showFallback();
-    }
+    showFallback();
   });
   
-  // Проверка через 6 секунд - если не загрузилось, пробуем Worker
+  // Скрываем загрузку через 5 секунд, если iframe видим
   setTimeout(() => {
-    if (!isLoaded && !hasError && currentSrc === directUrl) {
+    if (!hasError) {
       const iframeRect = iframe.getBoundingClientRect();
-      // Если iframe пустой или очень маленький - пробуем Worker
-      if (iframeRect.width === 0 || iframeRect.height < 100) {
-        console.log('Прямая загрузка не удалась, переключаемся на Worker...');
-        iframe.src = workerUrl;
-        currentSrc = workerUrl;
-      } else {
+      if (iframeRect.width > 0 && iframeRect.height > 0) {
         // Iframe видим - скрываем загрузку
         hideLoading();
         isLoaded = true;
       }
     }
-  }, 6000);
+  }, 5000);
   
-  // Финальная проверка через 15 секунд
+  // Финальная проверка через 12 секунд
   setTimeout(() => {
     if (!isLoaded && !hasError) {
       const iframeRect = iframe.getBoundingClientRect();
@@ -119,7 +97,7 @@ window.addEventListener('load', () => {
         isLoaded = true;
       }
     }
-  }, 15000);
+  }, 12000);
 });
 
 // Intersection Observer for fade-in animations
